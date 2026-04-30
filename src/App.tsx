@@ -34,11 +34,11 @@ interface RecentCall {
 
 // --- Mock Data ---
 const INITIAL_RECENTS: RecentCall[] = [
-  { id: '1', name: '+251 99 982 3256', number: '+251999823256', time: '4/24', type: 'missed', sim: 1 },
-  { id: '2', name: 'Enat 💖💖', number: '0987654321', time: '4/24', type: 'incoming', sim: 2 },
-  { id: '3', name: 'Fikru Classmate', number: '0900112233', time: '4/24', type: 'incoming', sim: 2 },
-  { id: '4', name: 'Ma Bro 😎', number: '0944556677', time: '4/24', type: 'incoming', sim: 2 },
-  { id: '5', name: 'Home', number: '011223344', time: '4/24', type: 'incoming', sim: 1 },
+  { id: '1', name: '+1 484-737-1678', number: '+14847371678', time: '10:27 PM', type: 'missed', sim: 2 },
+  { id: '2', name: 'ጮጋ', number: '0987654321', time: '07:37 PM', type: 'incoming', sim: 1 },
+  { id: '3', name: 'ሰላም 🐄', number: '0900112233', time: '01:09 PM', type: 'missed', sim: 2 },
+  { id: '4', name: 'Dani Class', number: '0912345678', time: '08:43 AM', type: 'incoming', sim: 2 },
+  { id: '5', name: 'Enat 💖💖', number: '0987111222', time: '08:21 AM', type: 'incoming', sim: 1 },
 ];
 
 // --- Components ---
@@ -54,11 +54,11 @@ const KeypadButton = ({
 }) => (
   <button
     onClick={() => onClick(digit)}
-    className="flex flex-col items-center justify-center p-2 active:bg-zinc-800/50 rounded-full transition-colors h-22 w-24"
+    className="flex flex-col items-center justify-center active:bg-zinc-800/30 rounded-full transition-colors h-[72px] w-full"
     id={`btn-${digit}`}
   >
-    <span className="text-[34px] font-normal leading-none text-white">{digit}</span>
-    {sub && <span className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase mt-1">{sub}</span>}
+    <span className="text-[30px] font-normal leading-none text-white">{digit}</span>
+    {sub && <span className="text-[10px] text-zinc-500 font-medium tracking-tight uppercase mt-1">{sub}</span>}
   </button>
 );
 
@@ -277,13 +277,13 @@ export default function App() {
             ref={dialerRef}
           >
             {/* --- Dialed Number Row --- */}
-            <div className="flex items-center justify-between px-8 py-4 h-20">
+            <div className="flex items-center justify-between px-8 py-2 h-16">
               <div className="w-10">
-                <MoreVertical className="w-6 h-6 text-zinc-500" />
+                <MoreVertical className="w-5 h-5 text-zinc-500" />
               </div>
               
               <div className="flex-1 flex justify-center items-center overflow-hidden">
-                <span className="text-[40px] font-light tracking-wide text-white truncate max-w-full">
+                <span className="text-[36px] font-normal tracking-tight text-white truncate max-w-full">
                   {dialedNumber}
                 </span>
               </div>
@@ -295,13 +295,13 @@ export default function App() {
                     onContextMenu={(e) => { e.preventDefault(); handleLongDelete(); }}
                     className="text-zinc-500 active:text-white transition-colors"
                   >
-                    <Delete className="w-9 h-9" />
+                    <Delete className="w-8 h-8" />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-y-2 justify-items-center mt-2 px-4">
+            <div className="grid grid-cols-3 gap-y-0.5 justify-items-center mt-1 px-8">
               <KeypadButton digit="1" sub="oo" onClick={handleDigitClick} />
               <KeypadButton digit="2" sub="abc" onClick={handleDigitClick} />
               <KeypadButton digit="3" sub="def" onClick={handleDigitClick} />
@@ -320,39 +320,39 @@ export default function App() {
             </div>
 
             {/* --- Action Buttons --- */}
-            <div className="flex items-center justify-between px-6 mt-8 mb-6">
+            <div className="flex items-center justify-between px-10 mt-6 mb-4">
               <button className="p-2 text-zinc-500 active:text-white transition-colors">
-                <Video className="w-7 h-7" />
+                <Video className="w-6 h-6" />
               </button>
 
-              <div className="flex items-center bg-green-500 rounded-full h-14 w-40 shadow-lg overflow-hidden">
+              <div className="flex items-center bg-[#25D366] rounded-full h-12 w-32 shadow-lg overflow-hidden">
                 <button 
                   onClick={() => runUSSD(dialedNumber)}
-                  className="flex-1 flex items-center justify-center active:bg-black/10 transition-colors border-r border-green-600/30 h-full relative"
+                  className="flex-1 flex items-center justify-center active:bg-black/10 transition-colors border-r border-white/10 h-full relative"
                 >
-                  <Phone className="w-5 h-5 text-white fill-current" />
-                  <span className="absolute bottom-1 right-2 text-[9px] font-bold text-white">1</span>
+                  <Phone className="w-4 h-4 text-white fill-current" />
+                  <span className="absolute bottom-1 right-2 text-[8px] font-bold text-white">1</span>
                 </button>
                 <button 
                   onClick={() => runUSSD(dialedNumber)}
                   className="flex-1 flex items-center justify-center active:bg-black/10 transition-colors h-full relative"
                 >
-                  <Phone className="w-5 h-5 text-white fill-current" />
-                  <span className="absolute bottom-1 right-2 text-[9px] font-bold text-white">2</span>
+                  <Phone className="w-4 h-4 text-white fill-current" />
+                  <span className="absolute bottom-1 right-2 text-[8px] font-bold text-white">2</span>
                 </button>
               </div>
 
-              <button className="bg-green-500 rounded-full w-14 h-14 flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                <MessageSquare className="w-6 h-6 text-white fill-current" />
+              <button className="bg-[#25D366] rounded-full w-12 h-12 flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                <MessageSquare className="w-5 h-5 text-white fill-current" />
               </button>
 
               <button 
                 onClick={() => setIsKeypadOpen(false)}
                 className="p-2 text-zinc-500 active:text-white transition-colors"
               >
-                <div className="grid grid-cols-3 gap-1 px-1">
+                <div className="grid grid-cols-3 gap-0.5">
                   {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 bg-zinc-400 rounded-full" />
+                    <div key={i} className="w-1 h-1 bg-zinc-400 rounded-full" />
                   ))}
                 </div>
               </button>
