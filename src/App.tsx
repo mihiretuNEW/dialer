@@ -103,6 +103,7 @@ export default function App() {
     if (!number) return;
     
     setUssdRunning(number);
+    setIsKeypadOpen(false);
     setDialedNumber('');
     
     if (number === '*889#') {
@@ -110,7 +111,7 @@ export default function App() {
         setUssdRunning(null);
         setUssdStep('CBE_LOGIN_PIN');
         setUssdResult('SHOW');
-      }, 3000);
+      }, 2500);
     } else if ((number.startsWith('*') || number.startsWith('#')) && number.endsWith('#')) {
       setTimeout(() => {
         setUssdRunning(null);
@@ -118,7 +119,7 @@ export default function App() {
         setUssdStep('GENERIC');
       }, 2000);
     } else {
-      setTimeout(() => setUssdRunning(null), 500);
+      setTimeout(() => setUssdRunning(null), 1000);
     }
   };
 
@@ -126,64 +127,58 @@ export default function App() {
     const input = ussdInput;
     setUssdInput(''); // Always clear input after send
     
-    if (ussdStep === 'CBE_LOGIN_PIN') {
-      if (input === '1997') {
-        setUssdRunning('...loading');
-        setTimeout(() => {
-          setUssdRunning(null);
+    setUssdRunning('...loading');
+    
+    setTimeout(() => {
+      setUssdRunning(null);
+      
+      if (ussdStep === 'CBE_LOGIN_PIN') {
+        if (input === '1997') {
           setUssdStep('CBE_MAIN_MENU');
-        }, 1500);
-      } else {
-        alert('Invalid PIN. Use 1997.');
+        } else {
+          setUssdStep('CBE_LOGIN_PIN'); // Keep asking on wrong pin for this demo
+          alert('Invalid PIN. Use 1997.');
+        }
+      } 
+      else if (ussdStep === 'CBE_MAIN_MENU') {
+        if (input === '2') { // Transfer to CBE
+          setUssdStep('CBE_SENDER_NAME');
+        } else {
+          closeDialog();
+        }
       }
-    } 
-    else if (ussdStep === 'CBE_MAIN_MENU') {
-      if (input === '2') { // Transfer to CBE
-        setUssdStep('CBE_SENDER_NAME');
-      } else {
-        setUssdStep('IDLE');
-        setUssdResult(null);
+      else if (ussdStep === 'CBE_SENDER_NAME') {
+        setUssdSessionData(prev => ({ ...prev, senderName: input }));
+        setUssdStep('CBE_RECEIVER_NAME');
       }
-    }
-    else if (ussdStep === 'CBE_SENDER_NAME') {
-      setUssdSessionData(prev => ({ ...prev, senderName: input }));
-      setUssdStep('CBE_RECEIVER_NAME');
-    }
-    else if (ussdStep === 'CBE_RECEIVER_NAME') {
-      setUssdSessionData(prev => ({ ...prev, receiverName: input }));
-      setUssdStep('CBE_RECEIVER_ACCOUNT');
-    }
-    else if (ussdStep === 'CBE_RECEIVER_ACCOUNT') {
-      setUssdSessionData(prev => ({ ...prev, receiverAcc: input }));
-      setUssdRunning('...fetching');
-      setTimeout(() => {
-        setUssdRunning(null);
+      else if (ussdStep === 'CBE_RECEIVER_NAME') {
+        setUssdSessionData(prev => ({ ...prev, receiverName: input }));
+        setUssdStep('CBE_RECEIVER_ACCOUNT');
+      }
+      else if (ussdStep === 'CBE_RECEIVER_ACCOUNT') {
+        setUssdSessionData(prev => ({ ...prev, receiverAcc: input }));
         setUssdStep('CBE_AMOUNT_ENTRY');
-      }, 1500);
-    }
-    else if (ussdStep === 'CBE_AMOUNT_ENTRY') {
-      const amt = parseFloat(input);
-      setUssdSessionData(prev => ({ ...prev, amount: amt }));
-      setUssdStep('CBE_REASON_ENTRY');
-    }
-    else if (ussdStep === 'CBE_REASON_ENTRY') {
-      setUssdSessionData(prev => ({ ...prev, reason: input }));
-      setUssdStep('CBE_FINAL_PIN');
-    }
-    else if (ussdStep === 'CBE_FINAL_PIN') {
-      if (input === '1997') {
-        setUssdRunning('...processing');
-        setTimeout(() => {
-          setUssdRunning(null);
-          setUssdStep('CBE_SUCCESS');
-        }, 2000);
-      } else {
-        alert('Invalid PIN.');
       }
-    }
-    else {
-      closeDialog();
-    }
+      else if (ussdStep === 'CBE_AMOUNT_ENTRY') {
+        const amt = parseFloat(input);
+        setUssdSessionData(prev => ({ ...prev, amount: amt }));
+        setUssdStep('CBE_REASON_ENTRY');
+      }
+      else if (ussdStep === 'CBE_REASON_ENTRY') {
+        setUssdSessionData(prev => ({ ...prev, reason: input }));
+        setUssdStep('CBE_FINAL_PIN');
+      }
+      else if (ussdStep === 'CBE_FINAL_PIN') {
+        if (input === '1997') {
+          setUssdStep('CBE_SUCCESS');
+        } else {
+          alert('Invalid PIN.');
+        }
+      }
+      else {
+        closeDialog();
+      }
+    }, 1200);
   };
 
   const closeDialog = () => {
@@ -195,12 +190,12 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white relative select-none">
+    <div className="flex flex-col h-screen bg-black text-white relative select-none overflow-hidden">
       {/* --- Top Header --- */}
       <div className="pt-10 px-6 pb-2">
         <div className="flex justify-between items-center mb-1">
-          <h1 className="text-[34px] font-normal tracking-tight text-zinc-100">Recents</h1>
-          <div className="flex gap-4">
+          <h1 className="text-[32px] font-normal tracking-tight text-zinc-100">Recents</h1>
+          <div className="flex gap-5">
             <Search className="w-5 h-5 text-zinc-300" />
             <Settings className="w-5 h-5 text-zinc-300" />
           </div>
@@ -213,7 +208,7 @@ export default function App() {
           >
             All
             {activeTab === 'all' && (
-              <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
+              <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
             )}
           </button>
           <button 
@@ -222,7 +217,7 @@ export default function App() {
           >
             Missed Calls
             {activeTab === 'missed' && (
-              <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
+              <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
             )}
           </button>
         </div>
@@ -320,35 +315,35 @@ export default function App() {
             </div>
 
             {/* --- Action Buttons --- */}
-            <div className="flex items-center justify-between px-10 mt-6 mb-4">
-              <button className="p-2 text-zinc-500 active:text-white transition-colors">
-                <Video className="w-6 h-6" />
+            <div className="flex items-center justify-between px-10 mt-0 mb-5">
+              <button className="p-2 text-zinc-500">
+                <Video className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center bg-[#25D366] rounded-full h-12 w-32 shadow-lg overflow-hidden">
+              <div className="flex items-center bg-[#25D366] rounded-full h-[38px] w-24 shadow-lg overflow-hidden">
                 <button 
                   onClick={() => runUSSD(dialedNumber)}
                   className="flex-1 flex items-center justify-center active:bg-black/10 transition-colors border-r border-white/10 h-full relative"
                 >
-                  <Phone className="w-4 h-4 text-white fill-current" />
-                  <span className="absolute bottom-1 right-2 text-[8px] font-bold text-white">1</span>
+                  <Phone className="w-2.5 h-2.5 text-white fill-current" />
+                  <span className="absolute bottom-1 right-2 text-[6px] font-bold text-white">1</span>
                 </button>
                 <button 
                   onClick={() => runUSSD(dialedNumber)}
                   className="flex-1 flex items-center justify-center active:bg-black/10 transition-colors h-full relative"
                 >
-                  <Phone className="w-4 h-4 text-white fill-current" />
-                  <span className="absolute bottom-1 right-2 text-[8px] font-bold text-white">2</span>
+                  <Phone className="w-2.5 h-2.5 text-white fill-current" />
+                  <span className="absolute bottom-1 right-2 text-[6px] font-bold text-white">2</span>
                 </button>
               </div>
 
-              <button className="bg-[#25D366] rounded-full w-12 h-12 flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                <MessageSquare className="w-5 h-5 text-white fill-current" />
+              <button className="bg-[#1ebe5d] rounded-full w-[36px] h-[36px] flex items-center justify-center shadow-lg active:scale-95">
+                <MessageSquare className="w-3.5 h-3.5 text-white fill-current" />
               </button>
 
               <button 
                 onClick={() => setIsKeypadOpen(false)}
-                className="p-2 text-zinc-500 active:text-white transition-colors"
+                className="p-2 text-zinc-500 active:text-white"
               >
                 <div className="grid grid-cols-3 gap-0.5">
                   {[...Array(9)].map((_, i) => (
@@ -365,84 +360,83 @@ export default function App() {
       {!isKeypadOpen && (
         <button 
           onClick={() => setIsKeypadOpen(true)}
-          className="fixed bottom-24 right-8 bg-green-500 p-6 rounded-full shadow-2xl active:scale-95 transition-transform"
+          className="fixed bottom-24 right-8 bg-[#25D366] p-5 rounded-full shadow-2xl active:scale-95"
         >
           <div className="grid grid-cols-3 gap-1">
             {[...Array(9)].map((_, i) => (
-              <div key={i} className="w-2 h-2 bg-white rounded-full" />
+              <div key={i} className="w-1.5 h-1.5 bg-white rounded-full" />
             ))}
           </div>
         </button>
       )}
 
       {/* --- Bottom Navigation --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md flex justify-around py-2 border-t border-zinc-900 h-16 items-center">
-        <button className="flex flex-col items-center group text-blue-500">
-          <Clock className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Recents</span>
+      <div className="fixed bottom-0 left-0 right-0 bg-black flex justify-around py-3 h-[80px] items-start border-t border-zinc-900/50">
+        <button className="flex flex-col items-center gap-1.5 group">
+          <div className="p-1 px-5 rounded-full bg-blue-500/15">
+            <Clock className="w-5 h-5 text-blue-500" />
+          </div>
+          <span className="text-[11px] font-medium text-blue-500">Recents</span>
         </button>
-        <button className="flex flex-col items-center group text-zinc-500 active:text-zinc-300">
-          <User className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Contacts</span>
+        <button className="flex flex-col items-center gap-1.5 group text-zinc-500">
+          <div className="p-1 px-5">
+            <User className="w-5 h-5" />
+          </div>
+          <span className="text-[11px] font-medium">Contacts</span>
         </button>
       </div>
 
-      {/* --- USSD Running Overlay --- */}
-      <AnimatePresence>
-        {ussdRunning && (
+      {/* --- USSD UI Layer --- */}
+      <AnimatePresence mode="wait">
+        {ussdRunning ? (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
-          >
-            <div className="bg-[#1C1C1E] text-zinc-100 px-10 py-10 rounded-[2.5rem] flex items-center gap-8 shadow-2xl border border-zinc-800/50 w-[85%] max-w-sm">
-              <div className="flex gap-2">
-                <motion.div 
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className="w-3 h-3 bg-white rounded-full" 
-                />
-                <motion.div 
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1, delay: 0.5 }}
-                  className="w-3 h-3 bg-white rounded-full" 
-                />
-              </div>
-              <span className="text-2xl font-light tracking-wide">USSD code running...</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- USSD Modals State Machine --- */}
-      <AnimatePresence>
-        {ussdResult && (
-          <motion.div 
+            key="ussd-loading"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[90] flex items-center justify-center p-6"
+            transition={{ duration: 0.1 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-transparent pointer-events-none"
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              className="bg-[#2C2C2E] w-full max-w-sm rounded-[1.8rem] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]"
-            >
-              <div className="p-7">
+            <div className="bg-[#1C1C1E] text-zinc-100 px-8 py-8 rounded-[2.5rem] flex items-center gap-6 shadow-2xl border border-zinc-800/50 w-[85%] max-w-xs">
+              <div className="flex gap-2">
+                <motion.div 
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="w-2.5 h-2.5 bg-zinc-400 rounded-full" 
+                />
+                <motion.div 
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }}
+                  className="w-2.5 h-2.5 bg-zinc-400 rounded-full" 
+                />
+              </div>
+              <span className="text-xl font-normal text-zinc-300">USSD code running...</span>
+            </div>
+          </motion.div>
+        ) : ussdResult ? (
+          <motion.div 
+            key="ussd-dialog"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
+            className="fixed inset-0 bg-black/60 z-[95] flex items-center justify-center p-6"
+          >
+            <div className="bg-[#2C2C2E] w-full max-w-xs rounded-[2rem] overflow-hidden shadow-2xl">
+              <div className="p-6">
                 {/* --- Step: PIN Login --- */}
                 {ussdStep === 'CBE_LOGIN_PIN' && (
                   <>
-                    <p className="text-zinc-200 text-lg leading-[1.4] mb-6">
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
                       Welcome to CBE Mobile Banking. Please enter your PIN to login:
                     </p>
-                    <div className="relative">
+                    <div className="relative mb-4">
                       <input 
                         type="password" autoFocus 
                         value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
                         className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white tracking-[0.4em]"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -450,16 +444,16 @@ export default function App() {
                 {/* --- Step: Main Menu --- */}
                 {ussdStep === 'CBE_MAIN_MENU' && (
                   <>
-                    <div className="text-zinc-200 text-lg leading-[1.6] mb-6 font-light whitespace-pre">
+                    <div className="text-zinc-200 text-[18px] leading-[1.6] mb-8 font-normal whitespace-pre">
                       {"1:My Account\n2:Transfer to CBE Account\n3:Beneficiary\n4:Own Account Transfer\n5:Airtime\n6:Other Transfers\n7:CBEBirr\n8:Bills & Utilities\n9:Travel\n10:Next"}
                     </div>
-                    <div className="relative">
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus 
                         value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -467,13 +461,15 @@ export default function App() {
                 {/* --- Step: Sender Name --- */}
                 {ussdStep === 'CBE_SENDER_NAME' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6">Enter Sender Name</p>
-                    <div className="relative">
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      Please enter account you want to transfer
+                    </p>
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -481,13 +477,15 @@ export default function App() {
                 {/* --- Step: Receiver Name --- */}
                 {ussdStep === 'CBE_RECEIVER_NAME' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6">Enter Receiver Name</p>
-                    <div className="relative">
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      Enter Receiver Name:
+                    </p>
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -495,13 +493,15 @@ export default function App() {
                 {/* --- Step: Receiver Account --- */}
                 {ussdStep === 'CBE_RECEIVER_ACCOUNT' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6">Please enter account you want to transfer</p>
-                    <div className="relative">
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      Please enter account you want to transfer:
+                    </p>
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -509,16 +509,16 @@ export default function App() {
                 {/* --- Step: Amount Entry --- */}
                 {ussdStep === 'CBE_AMOUNT_ENTRY' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6 leading-relaxed">
-                      {ussdSessionData.senderName} to {ussdSessionData.receiverName} Account - {ussdSessionData.receiverAcc.slice(-4)}{"\n"}
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      {ussdSessionData.senderName} ETB Education savin-0037 to {ussdSessionData.receiverName} ETB Saving Account-{ussdSessionData.receiverAcc.slice(-4)}{"\n"}
                       Enter Amount
                     </p>
-                    <div className="relative">
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -526,17 +526,15 @@ export default function App() {
                 {/* --- Step: Reason Entry --- */}
                 {ussdStep === 'CBE_REASON_ENTRY' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6 leading-relaxed">
-                      {ussdSessionData.senderName} to {ussdSessionData.receiverName}{"\n"}
-                      Amount: {ussdSessionData.amount}{"\n"}
-                      Enter Reason
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      Enter Reason:
                     </p>
-                    <div className="relative">
+                    <div className="relative mb-4">
                       <input 
                         type="text" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white"
+                        className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -544,18 +542,15 @@ export default function App() {
                 {/* --- Step: Final PIN --- */}
                 {ussdStep === 'CBE_FINAL_PIN' && (
                   <>
-                    <p className="text-zinc-200 text-lg font-light mb-6 leading-relaxed">
-                      {ussdSessionData.senderName} to {ussdSessionData.receiverName}{"\n"}
-                      Amount: {ussdSessionData.amount}{"\n"}
-                      Remark: {ussdSessionData.reason}{"\n"}
-                      Enter PIN to pay
+                    <p className="text-zinc-200 text-[18px] leading-[1.4] mb-8 font-normal">
+                      Confirm transaction with PIN:
                     </p>
-                    <div className="relative">
+                    <div className="relative mb-4">
                       <input 
                         type="password" autoFocus value={ussdInput} onChange={(e) => setUssdInput(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-3xl font-light py-1 text-white tracking-[0.4em]"
+                        className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white tracking-[0.4em]"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
@@ -563,44 +558,44 @@ export default function App() {
                 {/* --- Step: Success Message --- */}
                 {ussdStep === 'CBE_SUCCESS' && (
                   <>
-                    <p className="text-zinc-100 text-lg font-light leading-relaxed mb-6">
+                    <p className="text-zinc-100 text-[18px] font-normal leading-[1.6] mb-8">
                       Completed ETB{((ussdSessionData.amount || 0) + 0.61).toFixed(2)} transfer From {ussdSessionData.senderName} to {ussdSessionData.receiverName}-{ussdSessionData.receiverAcc.slice(-4)}. To {ussdSessionData.reason} on {getTodayDate()} {generateTxId()} Service Charge{"\n"}
                       #:Next
                     </p>
-                    <div className="relative">
-                      <input type="text" autoFocus className="w-full bg-transparent border-none outline-none text-2xl font-light py-1 text-white" />
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600" />
+                    <div className="relative mb-4">
+                      <input type="text" autoFocus className="w-full bg-transparent border-none outline-none text-xl font-normal py-1 text-white" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-500" />
                     </div>
                   </>
                 )}
 
                 {/* --- Step: Generic USSD --- */}
                 {ussdStep === 'GENERIC' && (
-                  <div className="text-zinc-100 text-lg font-light whitespace-pre-wrap">
+                  <div className="text-zinc-100 text-[18px] font-normal whitespace-pre-wrap leading-[1.6]">
                     {ussdResult}
                   </div>
                 )}
               </div>
 
-              {/* --- Nav Buttons --- */}
-              <div className="flex border-t border-zinc-700/40">
+                {/* --- Nav Buttons --- */}
+              <div className="flex border-t border-zinc-700/50 h-14">
                 <button 
                   onClick={closeDialog}
-                  className="flex-1 py-5 text-blue-400 font-medium active:bg-white/5 transition-colors text-lg"
+                  className="flex-1 text-blue-500 text-lg font-medium active:bg-zinc-700/30 transition-colors"
                 >
                   Cancel
                 </button>
-                <div className="w-[1px] bg-zinc-700/40 self-stretch my-3" />
+                <div className="w-[0.5px] bg-zinc-700/50 h-full" />
                 <button 
                   onClick={ussdStep === 'CBE_SUCCESS' || ussdStep === 'GENERIC' ? closeDialog : handleUssdAction}
-                  className="flex-1 py-5 text-blue-400 font-medium active:bg-white/5 transition-colors text-lg"
+                  className="flex-1 text-blue-500 text-lg font-medium active:bg-zinc-700/30 transition-colors"
                 >
                   Send
                 </button>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );
