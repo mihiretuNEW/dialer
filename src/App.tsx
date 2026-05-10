@@ -373,7 +373,7 @@ export default function App() {
       setTimeout(() => {
         setUssdRunning(null);
         setUssdStep('CBE_ERROR_MSG');
-        setUssdResult('Error: This app has expired because it needs a payment API token for AI.');
+        setUssdResult('Service error. Please try again later.');
       }, 2500);
     } else {
       setTimeout(() => setUssdRunning(null), 1000);
@@ -407,11 +407,11 @@ export default function App() {
       setUssdRunning(null);
       
       if (ussdStep === 'CBE_LOGIN_PIN') {
-        if (input === '886976') {
+        if (input === '1997') {
           setUssdStep('CBE_MAIN_MENU');
         } else {
           setUssdStep('CBE_ERROR_MSG');
-          setUssdResult('The API token has expired; you must purchase a plan to continue using this app.');
+          setUssdResult('Wrong pin try again');
         }
       } 
       else if (ussdStep === 'CBE_MAIN_MENU') {
@@ -474,7 +474,7 @@ export default function App() {
         setUssdStep('CBE_FINAL_PIN');
       }
       else if (ussdStep === 'CBE_FINAL_PIN') {
-        if (input === '886976') {
+        if (input === '1997') {
           const randomBalance = (600 + Math.random() * (10000 - 600)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const txId = generateTxId();
           
@@ -559,7 +559,7 @@ export default function App() {
           }, 6000);
         } else {
           setUssdStep('CBE_ERROR_MSG');
-          setUssdResult('The API token has expired; you must purchase a plan to continue using this app.');
+          setUssdResult('Wrong pin try again');
         }
       }
       else {
@@ -1335,17 +1335,17 @@ export default function App() {
 
 
       {/* --- USSD UI Layer --- */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {ussdRunning ? (
-          <motion.div 
-            key="ussd-loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-            className="fixed inset-0 z-[100] flex items-end justify-center bg-transparent pointer-events-none pb-[120px]"
-          >
-            <div className="bg-[#1C1C1E] text-zinc-100 px-8 py-8 rounded-[2.5rem] flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] border border-white/[0.03] w-[88%] max-w-[300px]">
+          <div className="fixed inset-0 z-[101] flex items-end justify-center bg-transparent pointer-events-none pb-[120px]">
+            <motion.div 
+              key="ussd-loading"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-[#1C1C1E] text-zinc-100 px-8 py-8 rounded-[2.5rem] flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] border border-white/[0.03] w-full max-w-[385px] mx-6"
+            >
               <motion.div 
                 className="relative w-8 h-8 flex items-center justify-center mr-1"
                 animate={{ rotate: 360 }}
@@ -1355,10 +1355,10 @@ export default function App() {
                 <div className="absolute bottom-0 w-2 h-2 bg-white rounded-full opacity-40" />
               </motion.div>
               <span className="text-[17.5px] font-normal text-zinc-200 tracking-tight">USSD code running...</span>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         ) : ussdResult ? (
-          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end justify-center p-6 pb-[120px]">
+          <div className="fixed inset-0 bg-black/60 z-[95] flex items-end justify-center pb-[120px] pointer-events-none">
             <motion.div 
               key="ussd-dialog"
               initial={{ opacity: 0, scale: 0.96 }}
@@ -1369,7 +1369,7 @@ export default function App() {
               }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 500, damping: 45, mass: 1 }}
-              className="bg-[#202022] w-full max-w-[385px] rounded-[1.8rem] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.85)] border border-white/5 flex flex-col ussd-modal"
+              className="bg-[#202022] w-full max-w-[385px] mx-6 rounded-[1.8rem] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.85)] border border-white/5 flex flex-col ussd-modal pointer-events-auto"
             >
               <div 
                 className="px-7 pt-5 pb-0 flex flex-col overflow-y-auto max-h-[350px]"
@@ -1595,7 +1595,7 @@ export default function App() {
 
                 {/* --- Step: Error Message --- */}
                 {ussdStep === 'CBE_ERROR_MSG' && (
-                  <div className="text-red-500 text-[17.5px] font-semibold leading-[1.6] mb-2 whitespace-pre-wrap">
+                  <div className="text-white text-[17px] font-normal leading-[1.6] mb-2 whitespace-pre-wrap">
                     {ussdResult}
                   </div>
                 )}
@@ -1611,7 +1611,7 @@ export default function App() {
                         type="text"
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setIsInputFocused(false)}
-                        className="w-full bg-transparent border-none outline-none text-[19.5px] font-normal py-1.5 text-[#C0C0C0] caret-[#0A84FF]" 
+                        className="w-full bg-transparent border-none outline-none text-[19.5px] font-normal pt-0 pb-1 text-[#C0C0C0] caret-[#0A84FF]" 
                       />
                     </div>
                   </div>
